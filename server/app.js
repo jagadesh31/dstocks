@@ -1,0 +1,56 @@
+require('dotenv').config();
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const mongoose = require('mongoose');
+const cors = require('cors')
+const http = require("http");
+const { Server } = require("socket.io");
+const { setTimeout } = require('timers/promises');
+const { setInterval } = require('timers');
+const app = express();
+
+const server = http.createServer(app); 
+const io = new Server(server, {
+  cors: { origin: "*" },
+});
+
+const PORT = process.env.PORT || 5100;
+
+
+
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.use('/auth', require('./routes/auth'));
+app.use('/memes', require('./routes/memes'));
+app.use('/user', require('./routes/user'));
+
+
+// const verifyJWT = require('./middleware/verifyJWT');
+
+
+// app.get('/admin', verifyJWT, verifyRoles('Admin'), (req, res) => {
+//   res.json({ message: 'Welcome Admin!' });
+// });
+
+
+mongoose.connect(process.env.MONGO_URL).then(()=>{
+    console.log('MongoDB connected');
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}).catch ((err)=>{
+    console.error(err);
+  })
+
+
+
+
+  let options = ['all','dankmemes','prequelmemes','terriblefacebookmemes','wholesomememes','deepfriedmemes','surrealmemes','funny','lastimages','memeeconomy']
+
+
+
+
