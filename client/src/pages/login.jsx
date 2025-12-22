@@ -1,292 +1,578 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-
-import axios from "axios"
+import axios from "axios";
 import { FaGoogle } from "react-icons/fa";
 import { FaFacebookF } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { MdOutlineEmail } from "react-icons/md";
 import { FaApple } from "react-icons/fa";
-import { ToastContainer,toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import useAuth from './../hooks/useAuth';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import useAuth from "./../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
-
-let icons = {
-      'google' : <FaGoogle/>,
-      'facebook' : <FaFacebookF/>,
-      'x' : <FaXTwitter/>,
-      'email' : <MdOutlineEmail/>,
-      'apple' : <FaApple/>
-    }
-
+const icons = {
+  google: <FaGoogle />,
+  facebook: <FaFacebookF />,
+  x: <FaXTwitter />,
+  email: <MdOutlineEmail />,
+  apple: <FaApple />
+};
 
 const Login = () => {
-  let navigate = useNavigate();
-    const {auth,setAuth} = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
-    const [currentDialog,setCurrentDialog] = useState('DefaultDialog');
-    const [email,setEmail] = useState('');
-    const [password,setPassword] = useState('');
-    const [username,setUsername] = useState('');
+  const navigate = useNavigate();
+  const { auth, setAuth } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentDialog, setCurrentDialog] = useState("DefaultDialog");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
 
-    const sendLink =(purpose)=>{
-      axios.get(`http://localhost:5000/auth/createLink?email=${email}&purpose=${purpose}`)
-       .then((res)=>{
-        console.log(res.data)
-         if(res.data.message === 'Send Successfully'){
-          toast.success(res.data.message)
-          setCurrentDialog('LinkSent');
-         } else{
-          toast.warn(res.data.message)
-         }
-       })
-       .catch((err)=>{
-        console.log(err)
-        toast.error(err.response.data.message)
-       })
+  const sendLink = (purpose) => {
+    axios
+      .get(
+        `${import.meta.env.VITE_SERVER_BASE_URL}/auth/createLink?email=${email}&purpose=${purpose}`
+      )
+      .then((res) => {
+        if (res.data.message === "Send Successfully") {
+          toast.success(res.data.message);
+          setCurrentDialog("LinkSent");
+        } else {
+          toast.warn(res.data.message);
+        }
+      })
+      .catch((err) => {
+        toast.error(err.response.data.message);
+      });
+  };
+
+  const dialog = {
+    DefaultDialog: <DefaultDialog setCurrentDialog={setCurrentDialog} />,
+    Signin: <Signin setCurrentDialog={setCurrentDialog} />,
+    SignupWithEmail: (
+      <SignupWithEmail
+        setCurrentDialog={setCurrentDialog}
+        setEmail={setEmail}
+        email={email}
+        sendLink={sendLink}
+        password={password}
+        setPassword={setPassword}
+        username={username}
+        setUsername={setUsername}
+        setIsOpen={setIsOpen}
+        setAuth={setAuth}
+      />
+    ),
+    SigninWithEmail: (
+      <SigninWithEmail
+        setCurrentDialog={setCurrentDialog}
+        setEmail={setEmail}
+        email={email}
+        sendLink={sendLink}
+        password={password}
+        setPassword={setPassword}
+        setAuth={setAuth}
+      />
+    ),
+    LinkSent: <LinkSent email={email} />
+  };
+
+  useEffect(() => {
+    if (auth?.user) {
+      return navigate("/");
     }
-
-        let dialog ={
-      'DefaultDialog' : <DefaultDialog setCurrentDialog={setCurrentDialog}/>,
-      'Signin' : <Signin setCurrentDialog={setCurrentDialog}/>,
-      'SignupWithEmail' : <SignupWithEmail setCurrentDialog={setCurrentDialog} setEmail={setEmail} email={email} sendLink={sendLink} password={password} setPassword={setPassword} username={username} setUsername={setUsername} setIsOpen={setIsOpen} setAuth={setAuth}/>,
-      'SigninWithEmail' : <SigninWithEmail setCurrentDialog={setCurrentDialog} setEmail={setEmail} email={email} sendLink={sendLink} password={password} setPassword={setPassword} setAuth={setAuth}/>,
-      'LinkSent':<LinkSent email={email}/>
-    };
-
-    useEffect(()=>{
-      console.log(auth.user)
-      if(auth?.user){
-        return navigate('/')
-      }
-    },[auth?.user])
+  }, [auth?.user, navigate]);
 
   return (
     <>
-      <ToastContainer/>
-      <Header setIsOpen={setIsOpen} isOpen={isOpen}/>
-    <div className={`body flex justify-center items-center w-screen h-screen bg-[#F7F4ED] ${isOpen?'opacity-50':''}`}>
-      <div className="mainContent text-black flex flex-col justify-center gap-7 w-[90%] max-w-[1200px] min-w-[400px] items-start">
-              {isOpen &&
-        createPortal(
-          <dialog
-            open
-            onClose={() => setIsOpen(false)}
-            className="fixed inset-0 z-50 rounded-lg shadow-xl w-screen h-screen bg-transparent flex justify-center items-center"
-          >
-            <div className="container bg-white shadow-xl h-[100%] w-[100%] md:h-auto md:min-h-[350px] max-w-[500px] md:w-[450px] text-black flex p-2">
-             {dialog[currentDialog]}
-            <button onClick={() => {setCurrentDialog('DefaultDialog');setIsOpen(false);setEmail('')}} className='self-start min-w-6'>X</button>
+      <ToastContainer />
+      <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+      <div className={`bg-[#F7F4ED] min-h-screen flex justify-center items-center pt-20 pb-20 px-4 ${isOpen ? "opacity-50" : ""}`}>
+        <div className="max-w-5xl w-full mx-auto">
+          <div className="flex flex-col gap-6 md:gap-8">
+            <div className="text-black">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+                Place to Trade
+              </h1>
+              <p className="text-lg md:text-2xl text-gray-700">
+                A place to and show your skills
+              </p>
             </div>
-          </dialog>,
-          document.body
-        )}
-        <div className="heading text-[70px] md:[80px] font-bold">Place to Trade</div>
-        <div className="subheading text-[24px] md:text-[26px]">A place to  and deepen your understanding</div>
-        <div className="wrapper">
-        <span className="startTrading inline-block text-[#F7F4ED] bg-black text-[18px] md:text-[20px] rounded-xl py-2 px-5 cursor-pointer" onClick={() => setIsOpen(true)}>Start Trading</span>
+            <button
+              onClick={() => setIsOpen(true)}
+              className="w-fit bg-black text-white cursor-pointer text-base md:text-lg px-6 md:px-8 py-3 rounded-lg font-semibold hover:bg-gray-900 transition"
+            >
+              Start Trading
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-    <Footer isOpen={isOpen}/>  
+
+      {isOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+            <dialog
+              open
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto relative"
+            >
+              <button
+                onClick={() => {
+                  setCurrentDialog("DefaultDialog");
+                  setIsOpen(false);
+                  setEmail("");
+                  setPassword("");
+                }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl font-bold transition"
+              >
+                ×
+              </button>
+              <div className="p-6 md:p-8">
+                {dialog[currentDialog]}
+              </div>
+            </dialog>
+          </div>,
+          document.body
+        )}
+      <Footer isOpen={isOpen} />
     </>
   );
 };
 
-
-const Header = ({setIsOpen,isOpen}) => {
+const Header = ({ setIsOpen, isOpen }) => {
   return (
-    <div className={`header footer bg-[#F7F4ED] text-black h-[70px] flex items-center justify-center w-screen border-black border-b-2 ${isOpen?'opacity-70':''} fixed top-0 left-0 shadow-black shadow-md`}>
-    <div className="container w-[90%] max-w-[1200px] min-w-[400px] flex justify-between items-center">
-      <div className="left text-[26px] md:text-[28px] cursor-pointer font-extrabold">DStocks</div>
-      <div className="right text-black text-[18px] md:text-[20px] list-none flex gap-8 items-center">
-        <li className='hidden md:block cursor-pointer'>Our Story</li>
-        <li className='hidden md:block cursor-pointer'>Membership</li>
-        <li className='hidden md:block cursor-pointer'>Write</li>
-        <li className='cursor-pointer'>Sign in</li>
-        <li className='text-[#F7F4ED] bg-black py-1 px-2 rounded-xl cursor-pointer'  onClick={() => setIsOpen(true)}>Get Started</li>
+    <header className={`fixed top-0 left-0 right-0 z-40 bg-bg-[#F7F4ED] border-b border-black${isOpen ? "opacity-50" : ""}`}>
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <h1 className="text-2xl md:text-3xl font-bold text-black">DStocks</h1>
+        <nav className="hidden md:flex items-center gap-8 text-black">
+          <a href="#" className="hover:text-gray-600 transition">
+            Our Story
+          </a>
+          {/* <a href="#" className="hover:text-gray-600 transition">
+            Membership
+          </a> */}
+          <a href="#" className="hover:text-gray-600 transition">
+            Invest
+          </a>
+          <button
+            onClick={() => setIsOpen(true)}
+            className="bg-black text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-900 transition cursor-pointer"
+          >
+            Get Started
+          </button>
+        </nav>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="md:hidden bg-black text-white px-4 py-2 rounded-lg font-medium"
+        >
+          Sign in
+        </button>
       </div>
-      </div>
-    </div>
+    </header>
   );
 };
 
-const Footer = ({isOpen}) => {
+const Footer = ({ isOpen }) => {
   return (
-    <div className={`footer bg-black text-[#F7F4ED] h-[60px] flex justify-center items-center w-screen ${isOpen?'opacity-50':''} fixed bottom-0 left-0`}>
-    <div className="container w-[90%] max-w-[1200px] min-w-[400px] flex items-center justify-between">
-      <div className='left self-start text-[18px] md:text-[20px] list-none gap-3 flex items-center'>
-        <li className='cursor-pointer'>About</li>
-        <li className='cursor-pointer'>Help</li>
-        <li className='cursor-pointer'>Terms</li>
-        <li className='cursor-pointer'>privacy</li>
+    <footer className={`fixed bottom-0 left-0 right-0 bg-black text-white border-t border-gray-800 ${isOpen ? "opacity-50" : ""}`}>
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-start gap-8">
+        <a href="#" className="hover:text-gray-300 transition">
+          About
+        </a>
+        <a href="#" className="hover:text-gray-300 transition">
+          Help
+        </a>
+        <a href="#" className="hover:text-gray-300 transition">
+          Terms
+        </a>
+        <a href="#" className="hover:text-gray-300 transition">
+          Privacy
+        </a>
+      </div>
+    </footer>
+  );
+};
+
+function DefaultDialog({ setCurrentDialog }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-black mb-2">
+          Join DStocks
+        </h2>
+        <p className="text-gray-600">
+          Create an account to start trading
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <button className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-black rounded-lg hover:bg-gray-50 transition">
+          <span className="text-xl">{icons.google}</span>
+          <span className="font-medium">Sign up with Google</span>
+        </button>
+
+        <button className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-black rounded-lg hover:bg-gray-50 transition">
+          <span className="text-xl">{icons.facebook}</span>
+          <span className="font-medium">Sign up with Facebook</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentDialog("SignupWithEmail")}
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-black rounded-lg hover:bg-gray-50 transition"
+        >
+          <span className="text-xl">{icons.email}</span>
+          <span className="font-medium">Sign up with Email</span>
+        </button>
+      </div>
+
+      <div className="text-center text-sm text-gray-600">
+        Already have an account?{" "}
+        <button
+          onClick={() => setCurrentDialog("Signin")}
+          className="text-blue-600 font-semibold hover:underline"
+        >
+          Sign in
+        </button>
+      </div>
+
+      <p className="text-xs text-gray-500 text-center">
+        Click "Sign up" to agree to DStocks's Terms of Service and acknowledge
+        that DStocks's Privacy Policy applies to you.
+      </p>
+    </div>
+  );
+}
+
+function SignupWithEmail({
+  setCurrentDialog,
+  setEmail,
+  email,
+  password,
+  setPassword,
+  username,
+  setUsername,
+  setAuth,
+  setIsOpen
+}) {
+  const navigate = useNavigate();
+
+  function signupHandler() {
+    axios
+      .post(
+        `${import.meta.env.SERVER_BASE_URL}/auth/register`,
+        {
+          email,
+          password,
+          username
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true
+        }
+      )
+      .then((res) => {
+        setAuth({ accessToken: res.data.accessToken, user: res.data.user });
+        toast.success("Account created successfully!");
+        navigate("/", { replace: true });
+      })
+      .catch((err) => {
+        toast.error(
+          err.response?.data?.message || "Signup failed"
+        );
+      });
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="text-center">
+        <div className="flex justify-center mb-4">
+          <span className="text-4xl">{icons.email}</span>
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-black">
+          Sign up with email
+        </h2>
+        <p className="text-gray-600 text-sm mt-2">
+          Enter your details to create an account
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="username" className="block text-sm font-medium text-black mb-1">
+            Username
+          </label>
+          <input
+            type="text"
+            id="username"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-black mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-black mb-1">
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Create a password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
         </div>
       </div>
+
+      <button
+        onClick={() => {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (emailRegex.test(email) && password && username) {
+            signupHandler();
+          } else {
+            toast.warn("Please fill all fields with valid information");
+          }
+        }}
+        className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-900 transition"
+      >
+        Create Account
+      </button>
+
+      <button
+        onClick={() => {
+          setCurrentDialog("DefaultDialog");
+          setIsOpen(false);
+          setEmail("");
+          setPassword("");
+          setUsername("");
+        }}
+        className="text-center text-sm text-gray-600 hover:text-black transition"
+      >
+        Back to Sign up options
+      </button>
+
+      <div className="text-center text-sm text-gray-600">
+        Already have an account?{" "}
+        <button
+          onClick={() => setCurrentDialog("Signin")}
+          className="text-blue-600 font-semibold hover:underline"
+        >
+          Sign in
+        </button>
+      </div>
+
+      <p className="text-xs text-gray-500 text-center">
+        This site is protected by reCAPTCHA Enterprise and the Google Privacy
+        Policy and Terms of Service apply.
+      </p>
     </div>
   );
-};
-
-function DefaultDialog({setCurrentDialog}){
-  return(
-          <div className="left flex flex-col justify-center items-center m-4 gap-4">
-            <div className="content pl-10 text-black flex flex-col gap-5 list-none">
-              <li className='text-[20px] md:text-[22px] font-bold text-center'>Join DStocks.</li>
-              <li className='border-black border-2 rounded-xl px-4 py-2 flex items-center justify-center gap-4'>
-                <span className="logo text-[16px] place-content-start">{icons.google}</span>
-                <span className="DStocks self-start">Sign up with Google</span>
-              </li>
-              <li className='border-black border-2 rounded-xl px-4 py-2 flex items-center justify-center gap-4'>
-                <span className="logo text-[18px] place-content-start">{icons.facebook}</span>
-                <span className="DStocks self-start">Sign up with Facebook</span>
-              </li>
-              <li className='border-black border-2 rounded-xl px-4 py-2 flex items-center justify-center gap-4'>
-                <span className="logo text-[16px] place-content-start">{icons.email}</span>
-                <span className="DStocks self-start" onClick={()=>{setCurrentDialog('SignupWithEmail')}}>Sign up with Email</span>
-              </li>
-              <li className='text-center'>Already have an account? <a  className='text-red-600' onClick={()=>{setCurrentDialog('Signin')}}>Sign in</a></li>
-            </div>
-          <p className='text-[12px] md:text-[14px] text-center text-[#919191]'>Click “Sign up” to agree to DStocks's Terms of Service and acknowledge that DStocks's Privacy Policy applies to you.</p>
-            </div>
-  )
 }
 
-function SignupWithEmail({setCurrentDialog,setEmail,email,setIsOpensendLink,password,setPassword,username,setUsername,setAuth,setIsOpen}){
-  let navigate = useNavigate()
-  function signupHandler(){
-   axios.post(`http://localhost:5000/auth/register`,{
-    email:email,
-    password:password,
-    username:username
-   },  {
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true
-  })
-    .then((res)=>{
-      console.log(res.data)
-      setAuth({accessToken: res.data.accessToken,user:res.data.user});
-       return navigate('/',{replace:true})
-        }).
-        catch((err)=>{
-      toast.error(err.response);
-    })
+function SigninWithEmail({
+  setCurrentDialog,
+  setEmail,
+  email,
+  password,
+  setPassword,
+  setAuth,
+  setIsOpen
+}) {
+  const navigate = useNavigate();
+
+  function signinHandler() {
+    axios
+      .post(
+        `${import.meta.env.VITE_SERVER_BASE_URL}/auth/login`,
+        {
+          email,
+          password
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true
+        }
+      )
+      .then((res) => {
+        setAuth({ accessToken: res.data.accessToken, user: res.data.user });
+        toast.success("Signed in successfully!");
+        navigate("/", { replace: true });
+      })
+      .catch((err) => {
+        toast.error(err.response?.data?.message || "Sign in failed");
+      });
   }
 
   return (
-            <div className="left flex flex-col justify-center items-center m-2 gap-3">
-            <div className="content pl-10 text-black flex flex-col gap-2 list-none">
-              <li className='text-[26px] md:text-[30px] text-center flex justify-center items-center'>{icons.email}</li>
-              <li className='text-[20px] md:text-[22px] font-bold text-center'>Sign up with email</li>
-                <li className='text-[16px] md:text-[18px] text-center'>Enter your email address to create an account.
-             Your email</li>
-              <li className='flex flex-col gap-1'>
-                <label htmlFor="username">username</label>
-                <input type="text" name="email" id="username" placeholder='Enter your email address' value={username}  className='bg-[#f2f2f2] px-3 py-2 focus:border-gray-500 border-1 border-transparent focus:border-1 focus:outline-none rounded-md' onChange={(e)=>setUsername(e.target.value)}/>
-              </li>
-              <li className='flex flex-col gap-1'>
-                <label htmlFor="email">Email</label>
-                <input type="email" name="email" id="email" placeholder='Enter your email address' value={email}  className='bg-[#f2f2f2] px-3 py-2 focus:border-gray-500 border-1 border-transparent focus:border-1 focus:outline-none rounded-md' onChange={(e)=>setEmail(e.target.value)}/>
-              </li>
-               <li className='flex flex-col gap-1'>
-                <label htmlFor="email">Create Password</label>
-                <input type="password" name="password" id="password" placeholder='Enter your password' className='bg-[#f2f2f2] px-3 py-2 rounded-md focus:border-gray-200' value={password} onChange={(e)=>setPassword(e.target.value)}/>
-              </li>
-              <span className="text-[#F7F4ED] bg-black text-[14px] md:text-[16px] rounded-xl py-2 px-4 cursor-pointer self-center" onClick={() => {if(email!=''){signupHandler()}else{toast.warn('Enter valid email')}}}>Create account</span>
-              <a className='text-center cursor-pointer' onClick={()=>{setCurrentDialog('DefaultDialog');setIsOpen(false);setEmail('');setPassword('')}}>Back to Sign up options</a>
-              <li className='text-center '>Already have an account? <a  className='text-red-600 cursor-pointer' onClick={()=>{setCurrentDialog('Signin')}}>Sign in</a></li>
-                        <p className='text-[12px] md:text-[14px] text-center text-[#919191]'>This site is protected by reCAPTCHA Enterprise and the
-Google Privacy Policy and Terms of Service apply.</p>
-            </div>
-            </div>
-  )
-}
+    <div className="flex flex-col gap-6">
+      <div className="text-center">
+        <div className="flex justify-center mb-4">
+          <span className="text-4xl">{icons.email}</span>
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-black">
+          Sign in with email
+        </h2>
+        <p className="text-gray-600 text-sm mt-2">
+          Enter your credentials to access your account
+        </p>
+      </div>
 
-function SigninWithEmail({setCurrentDialog,setEmail,email,password,setPassword,setAuth}){
-let navigate = useNavigate()
+      <div className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="signin-email" className="block text-sm font-medium text-black mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            id="signin-email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
 
-  function signinHandler(){
-   axios.post(`http://localhost:5000/auth/login`,{
-    email:email,
-    password:password
-   },  {
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true
-  })
-    .then((res)=>{
-         console.log(res.data)
-      setAuth({accessToken: res.data.accessToken,user:res.data.user});
-         return navigate('/',{replace:true})
-        }).
-        catch((err)=>{
-      toast.error(err.response);
-    })
-  }
+        <div>
+          <label htmlFor="signin-password" className="block text-sm font-medium text-black mb-1">
+            Password
+          </label>
+          <input
+            type="password"
+            id="signin-password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
+      </div>
 
+      <button
+        onClick={() => {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (emailRegex.test(email) && password) {
+            signinHandler();
+          } else {
+            toast.warn("Please enter valid email and password");
+          }
+        }}
+        className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-900 transition"
+      >
+        Continue
+      </button>
 
-  return (
-           <div className="left flex flex-col justify-center items-center m-4 gap-4">
-            <div className="content pl-10 text-black flex flex-col gap-5 list-none">
-              <li className='text-[26px] md:text-[30px] text-center flex justify-center items-center'>{icons.email}</li>
-              <li className='text-[20px] md:text-[22px] font-bold text-center'>Sign in with email</li>
-                <li className='text-[16px] md:text-[18px]  text-center'>Enter the email address associated with your account, and we'll send a magic link to your inbox.</li>
-              <li className='flex flex-col gap-2 py-1'>
-                <label htmlFor="email">Your email</label>
-                <input type="email" name="email" id="email" placeholder='Enter your email address' className='bg-[#f2f2f2] px-3 py-2 rounded-md focus:border-gray-200' value={email} onChange={(e)=>setEmail(e.target.value)}/>
-              </li>
-              <li className='flex flex-col gap-2 py-1'>
-                <label htmlFor="email">Your Password</label>
-                <input type="password" name="password" id="password" placeholder='Enter your password' className='bg-[#f2f2f2] px-3 py-2 rounded-md focus:border-gray-200' value={password} onChange={(e)=>setPassword(e.target.value)}/>
-              </li>
-              <span className="text-[#F7F4ED] bg-black text-[16px] md:text-[18px] rounded-xl py-2 px-5 cursor-pointer self-center" onClick={() => {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if(emailRegex.test(email)){signinHandler()}else{toast.warn('Enter valid email')}}}>Continue</span>
-              <a className='text-center cursor-pointer' onClick={()=>{setCurrentDialog('DefaultDialog');setIsOpen(false);setEmail('');setPassword('')}}>Back to Sign up options</a>
-            </div>
-          <p className='text-[12px] md:text-[14px] text-center text-[#919191]'>This site is protected by reCAPTCHA Enterprise and the
-Google Privacy Policy and Terms of Service apply.</p>
-            </div>
-  )
-}
+      <button
+        onClick={() => {
+          setCurrentDialog("DefaultDialog");
+          setIsOpen(false);
+          setEmail("");
+          setPassword("");
+        }}
+        className="text-center text-sm text-gray-600 hover:text-black transition"
+      >
+        Back to Sign up options
+      </button>
 
-function Signin({setCurrentDialog}){
-  return(
-          <div className="left flex flex-col justify-center items-center m-4 gap-4">
-            <div className="content pl-10 text-black flex flex-col gap-5 list-none">
-              <li className='text-[20px] md:text-[22px] font-bold text-center'>Welcome back.</li>
-              <li className='border-black border-2 rounded-xl px-4 py-2 flex items-center justify-between'>
-                <span className="logo place-content-start text-[16px]">{icons.google}</span>
-                <span className="DStocks cursor-poiner self-start w-2/3">Sign in with Google</span>
-              </li>
-              <li className='border-black border-2 rounded-xl px-4 py-2 flex items-center justify-between'>
-                <span className="logo text-[16px]">{icons.facebook}</span>
-                <span className="DStocks cursor-poiner self-start w-2/3">Sign in with Facebook</span>
-              </li>
-              <li className='border-black border-2 rounded-xl px-4 py-2 flex items-center justify-between'>
-                <span className="logo text-[16px]">{icons.email}</span>
-                <span className="DStocks cursor-poiner self-start w-2/3" onClick={()=>{setCurrentDialog('SigninWithEmail')}}>Sign in with Email</span>
-              </li>
-              <li className='text-center'>No account? <a  className='text-red-600 cursor-pointer' onClick={()=>{setCurrentDialog('DefaultDialog')}}>Create one</a></li>
-              <li className='text-center'>Forgot email or trouble signing in? <a  className='text-red-600 cursor-pointer'>Get help</a></li>
-            </div>
-          <p className='text-[12px] md:text-[14px] text-center text-[#919191]'>Click “Sign in” to agree to Logo’s Terms of Service and acknowledge that DStocks's Privacy Policy applies to you.</p>
-            </div>
-  )
-}
-
-
-const LinkSent = ({email}) => {
-  return (
-           <div className="left flex flex-col justify-center items-center m-4 gap-4">
-            <div className="content pl-10 text-black flex flex-col gap-5 list-none">
-              <li className='text-[26px] md:text-[30px] text-center flex justify-center items-center'>{icons.email}</li>
-              <li className='text-[20px] md:text-[22px] font-bold text-center'>Check your email inbox</li>
-                <li className='text-[16px] md:text-[18px]  text-center'>Click the link we sent to {email} to complete your account set-up.</li>
-            </div>
-            </div>
+      <p className="text-xs text-gray-500 text-center">
+        This site is protected by reCAPTCHA Enterprise and the Google Privacy
+        Policy and Terms of Service apply.
+      </p>
+    </div>
   );
-};
+}
 
+function Signin({ setCurrentDialog }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-black">
+          Welcome back
+        </h2>
+        <p className="text-gray-600 text-sm mt-2">
+          Sign in to your account
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <button className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-black rounded-lg hover:bg-gray-50 transition">
+          <span className="text-xl">{icons.google}</span>
+          <span className="font-medium">Sign in with Google</span>
+        </button>
+
+        <button className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-black rounded-lg hover:bg-gray-50 transition">
+          <span className="text-xl">{icons.facebook}</span>
+          <span className="font-medium">Sign in with Facebook</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentDialog("SigninWithEmail")}
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-black rounded-lg hover:bg-gray-50 transition"
+        >
+          <span className="text-xl">{icons.email}</span>
+          <span className="font-medium">Sign in with Email</span>
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-2 text-center text-sm">
+        <div className="text-gray-600">
+          No account?{" "}
+          <button
+            onClick={() => setCurrentDialog("DefaultDialog")}
+            className="text-blue-600 font-semibold hover:underline"
+          >
+            Create one
+          </button>
+        </div>
+        <div className="text-gray-600">
+          Forgot email or trouble signing in?{" "}
+          <a href="#" className="text-blue-600 font-semibold hover:underline">
+            Get help
+          </a>
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-500 text-center">
+        Click "Sign in" to agree to DStocks's Terms of Service and acknowledge
+        that DStocks's Privacy Policy applies to you.
+      </p>
+    </div>
+  );
+}
+
+function LinkSent({ email }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="text-center">
+        <div className="flex justify-center mb-4">
+          <span className="text-4xl">{icons.email}</span>
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-black">
+          Check your email
+        </h2>
+        <p className="text-gray-600 text-sm mt-3">
+          We've sent a verification link to <strong>{email}</strong>
+        </p>
+        <p className="text-gray-500 text-sm mt-2">
+          Click the link to complete your account setup
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default Login;
-

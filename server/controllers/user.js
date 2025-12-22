@@ -2,7 +2,8 @@ const User = require('../models/user');
 const memesModel = require('../models/meme');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+const {getAccessToken} = require('../controllers/memes');
+const axios = require('axios');
 
 const removeWatchlist = async (req, res) => {
   const { userId, memeName } = req.body;
@@ -29,6 +30,11 @@ const removeWatchlist = async (req, res) => {
   }
 }
 
+function priceCalculator(upVotes, noOfComments) {
+  const price = upVotes * 0.05 + noOfComments * 0.01;
+  return price.toFixed(2);
+}
+
 const getWatchlist = async (req, res) => {
   const { userId } = req.query;
 
@@ -36,21 +42,61 @@ const getWatchlist = async (req, res) => {
     const user = await User.findById(userId, 'watchlist');
     if (!user) return res.status(404).json({ error: 'User not found' });
 
+    const token = await getAccessToken();
+    
     const enrichedWatchlist = await Promise.all(
-      user.watchlist.map(async (name) => {
-        const memeData = await memesModel.findOne({ name }).sort({ timeStamp: -1 }).lean();
-        return {
-          name,
-          price: memeData?.price ?? 0,
-          timeStamp: memeData?.timeStamp ?? null,
-        };
+      user.watchlist.map(async (memeName) => {
+        try {
+          const response = await axios.get(`https://oauth.reddit.com/by_id/${memeName}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'User-Agent': 'myMemeApp/0.1 by yourRedditUsername'
+            }
+          });
+
+          const post = response.data.data.children[0]?.data;
+          if (!post) {
+            throw new Error("Meme not found");
+          }
+
+          if (post.post_hint !== 'image') {
+            throw new Error("Not an image post");
+          }
+
+          const memeInfo = {
+            title: post.title,
+            name: post.name,
+            image: post.url,
+            author: post.author,
+            upvotes: post.ups,
+            comments: post.num_comments,
+            subreddit: post.subreddit,
+            price: priceCalculator(post.ups, post.num_comments)
+          };
+
+          return memeInfo;
+        } catch (err) {
+          console.error(`❌ Error fetching meme ${memeName}:`, err.message);
+          
+         // Return fallback data for failed requests
+          return {
+            title: 'Unknown Title',
+            name: memeName,
+            image: `https://via.placeholder.com/200x300?text=${memeName}`,
+            author: 'Unknown Author',
+            upvotes: 0,
+            comments: 0,
+            subreddit: 'Unknown',
+            price: 0
+          };
+        }
       })
     );
 
     res.status(200).json(enrichedWatchlist);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch watchlist data' });
+    console.error("❌ Error in getWatchlist:", err.message);
+    res.status(500).json({ error: "Failed to fetch watchlist data" });
   }
 };
 

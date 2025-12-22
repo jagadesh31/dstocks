@@ -1,197 +1,275 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import axios from 'axios'
-import Loader from '../components/loader'
-import { createPortal } from "react-dom"
-import useAuth from './../hooks/useAuth';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts";
+import axios from "axios";
+import Loader from "../components/loader";
+import { createPortal } from "react-dom";
+import useAuth from "./../hooks/useAuth";
+import { toast } from "react-toastify";
+import { FaChartLine } from "react-icons/fa";
 
 function MemeInfo() {
-  let { auth } = useAuth();
-  let { memeName } = useParams();
-  let [data, setData] = useState([]);
-  let [loading, setLoading] = useState(true);
-  let navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-
-  function fetch() {
-    axios.get(`http://localhost:5000/memes/info?memeName=${memeName}`)
-      .then((res) => {
-        console.log(res.data)
-        if (!res.data.length) {
-          console.log(data)
-          return navigate('/');
-        }
-        setData(res.data)
-        setTimeout(() => setLoading(false), 1000);
-      }).
-      catch((err) => {
-        console.log(err)
-      })
-  }
+  const { auth } = useAuth();
+  const { memeName } = useParams();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showBuy, setShowBuy] = useState(false);
+  const [priceAnim, setPriceAnim] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    function fetch() {
+      axios
+        .get(`${import.meta.env.VITE_SERVER_BASE_URL}/memes/info?memeName=${memeName}`)
+        .then((res) => {
+          if (!res.data) return navigate("/");
+          const entry = {
+            ...res.data,
+            timeStamp: new Date().toISOString(),
+          };
+          setData((prev) => {
+            if (
+              prev.length &&
+              entry.price !== prev[prev.length - 1].price
+            ) {
+              setPriceAnim(true);
+              setTimeout(() => setPriceAnim(false), 400);
+            }
+            return [...prev.slice(-49), entry];
+          });
+          if (loading)
+            setTimeout(() => setLoading(false), 200);
+        })
+        .catch(() => toast.error("Failed to fetch meme data"));
+    }
     fetch();
-    let id = setInterval(() => {
-      fetch()
-    }, 5 * 1000)
+    const interval = setInterval(fetch, import.meta.env.VITE_FREQUENCY);
+    return () => clearInterval(interval);
+  }, [memeName, navigate, loading]);
 
+  const current = data[data.length - 1];
+  const high = data.length ? Math.max(...data.map((d) => d.price)) : 0;
+  const low = data.length ? Math.min(...data.map((d) => d.price)) : 0;
 
-    return (() => {
-      clearInterval(id)
-    })
-  }, [])
+  let domainLow = low, domainHigh = high;
+  if (high !== low) {
+    const margin = (high - low) * 0.04;
+    domainLow = low - margin;
+    domainHigh = high + margin;
+  } else {
+    domainLow = low - 1;
+    domainHigh = high + 1;
+  }
 
   return (
-    <div className='backgroundDiv min-h-screen bg-[#0D1421] flex justify-center items-center'>
-      <div className='container w-[85%] flex flex-col gap-4 rounded-xl'>
-        {loading ? <Loader /> : (
-          <div className='container flex flex-col px-4'>
-            <div className='flex justify-between items-center py-8'>
-              <div className='flex flex-col px-2 text-white'>
-                <span className='title p-2 font-medium text-3xl overflow-hidden'>
-                  Name <span className='duration p-2 font-medium text-3xl'>
-                    {data[0]?.name}
-                  </span>
+    <div className="bg-[#F7F4ED] min-h-screen pt-8 pb-6 px-3 sm:px-6 md:px-12 mt-16">
+      <div className="max-w-6xl mx-auto">
+        {loading ? (
+          <Loader />
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Info Section */}
+            <section className="w-full lg:w-1/2 bg-white rounded-xl border border-gray-300 shadow-lg p-5 flex flex-col mb-4">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <h1 className="text-2xl lg:text-3xl font-semibold text-black">
+                  {current?.name}
+                </h1>
+                <span className="bg-black text-xs px-2 py-0.5 rounded text-white flex items-center gap-1">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  LIVE
                 </span>
-
-                <span className='title p-2 font-medium text-3xl overflow-hidden'>
-                  Price <span className='duration p-2 font-medium text-3xl'>
-                    {data[data.length - 1]?.price}
-                  </span>
+              </div>
+              <div className="text-gray-700 text-base mb-4">
+                by {current?.author}
+              </div>
+              <div className="mb-6">
+                <span className={
+                  "text-2xl lg:text-3xl font-bold transition-transform duration-300 " +
+                  (priceAnim ? "text-red-600 scale-105" : "text-black")
+                }>
+                  ${current?.price}
                 </span>
-
               </div>
-                <div className="box w-full flex justify-end gap-8 items-center">
-                  <span className="buy px-2 py-2 border-2 font-medium text-[18px] border-blue-800 text-blue-600 cursor-pointer self-end justify-end items-end place-content-end" onClick={() => setIsOpen(true)}>Buy</span>
-                <Link to='/'>
-                <div className='cancelIcon text-4xl px-2 py-2 border-2 font-medium text-[18px] border-blue-800 text-blue-600 cursor-pointer'>Back</div>
-              </Link>
-                </div>
-            </div>
-
-            <div className="flex items-stretch gap-2 md:gap-4">
-              <div className="left flex justify-center items-center pl-2 md:pl-4">
-                {/* <div className='imageContainer overflow-hidden rounded-xl h-[150px] w-[105px] md:h-[250px] md:w-[175px] lg:h-[300px] lg:w-[210px] border-[#636363]  border-2'>
-          <img
-            // src={data.thumbnail}
-            draggable='false'
-            className='transition duration-500 ease-in-out hover:scale-105'
-          />
-      </div> */}
+              <div className="grid grid-cols-2 gap-4 border-t border-gray-300 pt-4 mb-7">
+                <Stat label="High" value={`₹${high}`} />
+                <Stat label="Low" value={`₹${low}`} />
               </div>
-              <StockChart data={data} />
-            </div>
+              <div className="flex gap-3 mt-auto">
+                <button
+                  onClick={() => setShowBuy(true)}
+                  className="flex-1 bg-black hover:bg-gray-900 text-white py-2.5 rounded-lg font-medium transition"
+                >
+                  Buy Now
+                </button>
+                <Link to="/" className="flex-1">
+                  <button className="w-full border border-black text-black rounded-lg font-medium py-2.5 transition hover:bg-gray-100">
+                    Back
+                  </button>
+                </Link>
+              </div>
+            </section>
 
-          </div>)}
-        {isOpen &&
+            {/* Chart Section */}
+            <section className="w-full lg:w-1/2 bg-white rounded-xl border border-gray-300 shadow-lg p-5 flex flex-col">
+              <div className="text-black font-medium text-base flex items-center gap-2 mb-3">
+                <FaChartLine /> Price Chart (Live)
+              </div>
+              <StockChart data={data} domain={[domainLow, domainHigh]} />
+            </section>
+          </div>
+        )}
+
+        {showBuy &&
           createPortal(
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
               <dialog
                 open
-                className="bg-white rounded-xl shadow-2xl w-[90%] max-w-[450px] relative border-none"
+                className="bg-white border border-gray-300 rounded-lg shadow-xl w-full max-w-sm relative"
               >
                 <button
-                  onClick={() => setIsOpen(false)}
-                  className="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-xl font-bold"
+                  onClick={() => setShowBuy(false)}
+                  className="absolute top-3 right-3 text-gray-600 text-2xl font-bold hover:text-black transition"
                 >
                   ×
                 </button>
-
-                <DefaultDialog data={data[data.length - 1]} auth={auth} setIsOpen={setIsOpen} />
+                <BuyDialog data={current} auth={auth} setIsOpen={setShowBuy} />
               </dialog>
             </div>,
             document.body
           )}
-
       </div>
     </div>
-  )
+  );
 }
 
-export default MemeInfo;
+const Stat = ({ label, value }) => (
+  <div>
+    <span className="block text-xs text-gray-600 mb-1">{label}</span>
+    <span className="block text-lg font-bold text-black">{value}</span>
+  </div>
+);
 
+const StockChart = ({ data, domain }) => {
+  const CustomTooltip = ({ active, payload }) =>
+    active && payload?.length ? (
+      <div className="bg-white border border-black rounded p-2 text-xs shadow-lg">
+        <div className="text-black font-semibold">₹{payload[0].value}</div>
+      </div>
+    ) : null;
 
-
-const StockChart = ({ data }) => {
-  console.log(data)
   return (
-    <ResponsiveContainer width="100%" height={400}>
-      <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="timeStamp" />
-        <YAxis type="number" domain={['dataMin', 'dataMax']} />
-        <Tooltip />
+    <ResponsiveContainer width="100%" height={230}>
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <XAxis
+          dataKey="timeStamp"
+          stroke="#4B5563"
+          tick={{ fill: "#4B5563", fontSize: 11 }}
+          minTickGap={15}
+          hide={data.length < 2}
+        />
+        <YAxis
+          type="number"
+          domain={domain}
+          stroke="#4B5563"
+          tick={{ fill: "#4B5563", fontSize: 11 }}
+        />
+        <Tooltip content={CustomTooltip} />
         <Line
-          type="linear"
+          type="monotone"
           dataKey="price"
-          stroke="#8884d8"
-          strokeWidth={2}
+          stroke="#DC2626"
+          strokeWidth={2.5}
+          dot={{ fill: "#DC2626", r: 2 }}
+          name="Price (₹)"
         />
       </LineChart>
     </ResponsiveContainer>
   );
 };
 
-function DefaultDialog({ data, auth, setIsOpen }) {
+function BuyDialog({ data, auth, setIsOpen }) {
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const totalPrice = data?.price * quantity;
 
-  const changeHandler = (e) => {
-    setQuantity(e.target.value);
-  };
-
-  const buyHandler = () => {
-    setIsOpen(false);
+  function buyHandler() {
+    if (!auth?.user?._id) return toast.error("Please login to buy");
+    setLoading(true);
     axios
-      .get(`http://localhost:5000/user/buy?name=${data.name}&userId=${auth.user._id}&price=${data.price}&quantity=${quantity}`)
-      .then((res) => {
-        console.log(res.data);
-        setData(res.data);
-        toast.success(`Successfully bought ${quantity} ${data.name} meme stock(s)!`);
-        setTimeout(() => setLoading(false), 1000);
+      .get(
+        `${import.meta.env.VITE_SERVER_BASE_URL}/user/buy?name=${data.name}&userId=${auth.user._id}&price=${data.price}&quantity=${quantity}`
+      )
+      .then(() => {
+        toast.success(
+          `Successfully bought ${quantity} ${data.name} meme stock(s)!`
+        );
+        setIsOpen(false);
       })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+      .catch(() => toast.error("Purchase failed. Please try again."))
+      .finally(() => setLoading(false));
+  }
 
   return (
-    <div className="flex flex-col justify-center items-center w-full p-6 gap-6">
-      <h2 className="text-2xl font-bold text-center text-blue-800">Buy DStocks</h2>
-
-      <div className="flex flex-col gap-3 w-full">
-        <div className="flex flex-col gap-1">
-          <label className="text-lg font-semibold text-gray-700">Name</label>
-          <p className="px-3 py-2 border rounded-md bg-gray-100">{data?.name}</p>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold text-black mb-5 text-center">
+        Buy Meme Stock
+      </h2>
+      <div className="flex flex-col gap-3">
+        <div>
+          <label className="text-sm text-gray-700 block mb-1">
+            Meme Name
+          </label>
+          <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded text-black">
+            {data?.name}
+          </div>
         </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-lg font-semibold text-gray-700">Price</label>
-          <p className="px-3 py-2 border rounded-md bg-gray-100">₹{data?.price}</p>
+        <div>
+          <label className="text-sm text-gray-700 block mb-1">
+            Price per Unit
+          </label>
+          <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded text-black">
+            ₹{data?.price}
+          </div>
         </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="stocks" className="text-lg font-semibold text-gray-700">Quantity</label>
+        <div>
+          <label htmlFor="stocks" className="text-sm text-gray-700 block mb-1">
+            Quantity
+          </label>
           <input
             type="number"
             id="stocks"
-            name="stocks"
-            value={quantity}
             min={1}
-            onChange={changeHandler}
-            className="px-3 py-2 border rounded-md focus:outline-none focus:ring-blue-400"
-            placeholder="Enter quantity"
+            value={quantity}
+            onChange={(e) =>
+              setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+            }
+            className="px-3 py-2 w-full bg-gray-100 text-black border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-black transition"
           />
         </div>
+        <div className="flex justify-between items-center px-3 py-2.5 bg-black/10 border border-black rounded-lg mt-2">
+          <span className="text-black font-medium">Total Price</span>
+          <span className="font-bold text-black text-lg">₹{totalPrice}</span>
+        </div>
       </div>
-
       <button
+        type="button"
         onClick={buyHandler}
-        className="mt-4 w-full px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold transition"
+        disabled={loading}
+        className="w-full mt-5 px-5 py-2.5 rounded-lg bg-black hover:bg-gray-900 disabled:bg-gray-500 text-white font-semibold transition"
       >
-        Buy
+        {loading ? "Processing..." : "Confirm Purchase"}
       </button>
     </div>
   );
 }
+
+export default MemeInfo;

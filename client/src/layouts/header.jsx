@@ -6,32 +6,22 @@ import useLogout from '../hooks/useLogout'
 
 import '../App.css'
 
-
 import { FaHome } from "react-icons/fa";
 import { GrTransaction } from "react-icons/gr";
 import { MdDashboard } from "react-icons/md";
-import { RiLockPasswordFill } from "react-icons/ri";;
+import { RiLockPasswordFill } from "react-icons/ri";
 
-function Header() {
+export default function Header() {
   let logout = useLogout();
   let { auth, setAuth } = useAuth();
   let { pathname } = useLocation();
   let [menu, setMenu] = useState(false);
 
-  console.log(auth.profileImage)
-
-
   let links = [
-   { path: '/dashboard', name: 'Dashboard' }, { path: '/leaderboard', name: 'Leaderboard' }, { path: '/watchlist', name: 'Watchlist' }, { path: '/changePassword', name: 'Change Password' },
+    { path: '/dashboard', name: 'Dashboard', icon: <MdDashboard /> },
+    { path: '/leaderboard', name: 'Leaderboard', icon: <FaHome /> },
+    { path: '/watchlist', name: 'Watchlist', icon: <GrTransaction /> },
   ]
-
-  let icons = {
-    'Home': <FaHome />,
-    'Change Password': <RiLockPasswordFill />,
-    'Transactions': <GrTransaction />,
-    'Dashboard': <MdDashboard />,
-  }
-
 
   useEffect(() => {
     setMenu(false);
@@ -39,74 +29,101 @@ function Header() {
   }, [pathname])
 
   return (
-    <div className='header w-screen h-[65px] bg-black shadow-sm shadow-[#ffffff] fixed z-1 top-0 flex justify-center'>
-      <div className='headerContainer flex justify-between items-center w-[85%]'>
-        <div className='logoContainer text-white hover:text-[#4242FA] font-serif font-bold text-2xl cursor:pointer'>
-          <FiMenu onClick={() => { setMenu(true) }} />
+    <div className='header w-screen h-[70px] bg-black shadow-lg fixed z-50 top-0 flex justify-center border-b border-gray-800'>
+      <div className='headerContainer flex justify-between items-center w-[90%] max-w-6xl'>
+        {/* Menu Button */}
+        <div className='logoContainer text-white hover:text-gray-300 cursor-pointer transition-colors'>
+          <FiMenu 
+            onClick={() => { setMenu(true) }} 
+            className="text-2xl"
+          />
         </div>
 
-        <ul className='headerMiddle w-[50%] hidden md:flex text-white font-medium text-md lg:text-xl font-poppins justify-evenly items-center'>
-          <NavLink to='/watchlist'>
-            <li>Watchlist</li>
-          </NavLink>
-          <NavLink to='/portfolio'>
-            <li>Portfolio</li>
-          </NavLink>
-          <NavLink to='/leaderboard'>
-            <li>Leaderboard</li>
-          </NavLink>
-        </ul>
+        {/* App Name */}
+        <div className='text-white text-xl md:text-2xl font-bold'>
+          DStocks
+        </div>
 
-        <Link to={`/portfolio`} className='flex items-center gap-4'>
-
+        {/* User Info */}
+        <Link to={`/portfolio`} className='flex items-center gap-4 hover:bg-gray-800 rounded-lg px-3 py-2 transition-colors'>
           <div className='profileContainer'>
-            <div className="flex items-center space-x-4">
-              <img src={auth.user.profileImageUrl} className="w-10 h-10 rounded-full" />
-              <span className="text-white font-medium">
-                {auth.user.coins} Coins
+            <div className="flex items-center space-x-3">
+              <img 
+                src={auth.user?.profileImageUrl} 
+                className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white" 
+                alt="Profile"
+              />
+              <span className="text-white font-medium text-sm md:text-base hidden md:block">
+                {auth.user?.coins} Coins
               </span>
             </div>
           </div>
         </Link>
       </div>
 
-      {menu && <div className="menuContainer w-screen h-screen fixed z-10 flex flex-row-reverse">
+      {/* Sidebar Menu */}
+      {menu && (
+        <div className="menuContainer w-screen h-screen fixed z-50 flex">
+          {/* Backdrop */}
+          <div 
+            className="bg-black/50 w-full h-screen" 
+            onClick={() => { setMenu(false) }}
+          ></div>
 
-        <div className="right-0 top-0 bg-amber-100 w-full h-screen blur-xs opacity-20 z-10" onClick={() => { setMenu(false) }}>
-        </div>
-
-
-        <div className="left top-0 left-0 w-auto lg:w-[30%] h-screen bg-[#12101D] z-11 text-black flex flex-col px-4 py-8 gap-6">
-
-          <ul className='footer flex justify-between items-center py-3 font-normal text-[16px] md:text-[18px] rounded-lg place-content-center px-1 gap-1
-          bg-[#1E1A31] md:px-8'>
-            <span className='profileImage pt-1'>
-              <img src={auth.user.profileImageUrl} className='h-10 w-10 text-white rounded-full' />
-            </span>
-            <div className="profileright flex flex-col">
-              <span className="name font-bold flex place-content-end text-white">{auth?.user?.username}</span>
-              <span className="cursor-pointer text-[14px] md:text-[16px] text-[#7b7b7e]" onClick={() => { logout() }}>
-                logout
-              </span>
+          {/* Sidebar */}
+          <div className="w-80 h-screen bg-white shadow-xl absolute left-0 top-0 flex flex-col p-6">
+            {/* User Profile Section */}
+            <div className='flex items-center gap-4 pb-6 border-b border-gray-200 mb-6'>
+              <img 
+                src={auth.user?.profileImageUrl} 
+                className='h-12 w-12 rounded-full border-2 border-black' 
+                alt="Profile"
+              />
+              <div className="flex flex-col">
+                <span className="font-bold text-black text-lg">{auth?.user?.username}</span>
+                <span 
+                  className="cursor-pointer text-gray-600 hover:text-black transition-colors"
+                  onClick={() => { logout() }}
+                >
+                  Sign Out
+                </span>
+              </div>
             </div>
-          </ul>
 
-          <ul className='body flex flex-col self-start gap-4 text-white w-full px-2'>
-            {links.map((ele, idx) => {
-              return <NavLink to={ele.path} key={idx} className='py-3 font-normal text-[16px] md:text-[18px] rounded-lg hover:bg-[#1E1A31]   place-content-center flex align-center justify-start px-5 gap-1 w-full'>
-                <span className="icon pt-1">{icons[ele.name]}</span>
-                <span className="name">{ele.name}</span>
-              </NavLink>
-            })}
-          </ul>
+            {/* Navigation Links */}
+            <ul className='body flex flex-col gap-2'>
+              {links.map((ele, idx) => (
+                <NavLink 
+                  to={ele.path} 
+                  key={idx}
+                  className={({ isActive }) => 
+                    `flex items-center gap-4 py-4 px-4 font-medium text-lg rounded-lg transition-all ${
+                      isActive 
+                        ? 'bg-black text-white' 
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-black'
+                    }`
+                  }
+                >
+                  <span className="text-xl">{ele.icon}</span>
+                  <span>{ele.name}</span>
+                </NavLink>
+              ))}
+            </ul>
 
+            {/* Quick Stats */}
+            <div className='mt-auto pt-6 border-t border-gray-200'>
+              <div className='bg-gray-100 rounded-lg p-4'>
+                <div className='text-black font-bold text-lg mb-2'>
+                  Portfolio Value
+                </div>
+                <div className='text-gray-600 text-sm'>
+                  Track your investments
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-      </div>}
-
+      )}
     </div>
-  )
+  );
 }
-
-
-export default Header
