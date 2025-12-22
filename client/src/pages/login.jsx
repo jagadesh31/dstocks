@@ -258,7 +258,7 @@ function SignupWithEmail({
   function signupHandler() {
     axios
       .post(
-        `${import.meta.env.SERVER_BASE_URL}/auth/register`,
+        `${import.meta.env.VITE_SERVER_BASE_URL}/auth/register`,
         {
           email,
           password,

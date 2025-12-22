@@ -3,16 +3,8 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const cors = require('cors')
-const http = require("http");
-const { Server } = require("socket.io");
-const { setTimeout } = require('timers/promises');
-const { setInterval } = require('timers');
 const app = express();
 
-const server = http.createServer(app); 
-const io = new Server(server, {
-  cors: { origin: "*" },
-});
 
 const PORT = process.env.PORT || 5100;
 
@@ -45,12 +37,5 @@ mongoose.connect(process.env.MONGO_URL).then(()=>{
 }).catch ((err)=>{
     console.error(err);
   })
-
-
-
-
-  let options = ['all','dankmemes','prequelmemes','terriblefacebookmemes','wholesomememes','deepfriedmemes','surrealmemes','funny','lastimages','memeeconomy']
-
-
 
 

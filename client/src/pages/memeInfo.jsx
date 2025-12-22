@@ -205,7 +205,7 @@ function BuyDialog({ data, auth, setIsOpen }) {
     if (!auth?.user?._id) return toast.error("Please login to buy");
     setLoading(true);
     axios
-      .get(
+      .post(
         `${import.meta.env.VITE_SERVER_BASE_URL}/user/buy?name=${data.name}&userId=${auth.user._id}&price=${data.price}&quantity=${quantity}`
       )
       .then(() => {

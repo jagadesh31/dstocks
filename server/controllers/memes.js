@@ -77,9 +77,7 @@ async function fetchTopMemes(req, res) {
 async function getMemeInfo(req, res) {
   try {
     const { memeName } = req.query; 
-    console.log(memeName)
 
-    console.log(memeName)
     if (!memeName) {
       return res.status(400).json({ error: "Missing memeName query param" });
     }

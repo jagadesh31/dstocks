@@ -53,7 +53,6 @@ res.cookie('jwt', refreshToken, {
 
 const handleLogin = async (req, res) => {
   const { email, password } = req.body;
-  console.log(req.body)
   if (!email || !password) return res.sendStatus(400);
 
   const user = await User.findOne({ email });
@@ -88,14 +87,11 @@ res.cookie('jwt', refreshToken, {
 
 
 const handleRefreshToken = async (req, res) => {
-  console.log('Cookies:', req.cookies); 
   const cookies = req.cookies;
-  console.log(cookies)
   if (!cookies?.jwt) return res.sendStatus(401);
 
   const refreshToken = cookies.jwt;
 
-  console.log(refreshToken)
 
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decoded) => {
      const user = await User.findOne({ _id:decoded.userId });

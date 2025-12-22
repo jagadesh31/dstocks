@@ -4,7 +4,7 @@ import useLogout from "../hooks/useLogout";
 import { MemesContainer } from '../components/meme';
 import axios from 'axios';
 import Loader from '../components/loader';
-import Header from "../layouts/header";
+import Header from "../components/header";
 
 const Home = () => {
     const navigate = useNavigate();
