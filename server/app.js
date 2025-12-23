@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5100;
 
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: 'https://dstocks.jagadesh31.tech',
   credentials: true
 }));
 
